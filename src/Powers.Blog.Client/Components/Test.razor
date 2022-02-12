@@ -1,0 +1,35 @@
+﻿@page "/test"
+
+
+
+@for(var i = 0; i < 50; i++)
+{
+     <Card Style="width: 100%; margin-top: 5px"
+          Actions="new[] { actionSetting, actionEdit, actionEllipsis }">
+        <Skeleton Loading="loading" Avatar Active>
+            <CardMeta Title="Card title"
+                      Description="This is the description"
+                      Avatar="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+        </Skeleton>
+    </Card>
+}
+
+@code {
+    bool loading = true;
+    void OnChange()
+    {
+        loading = !loading;
+    }
+
+    private RenderFragment actionSetting =@<Template>
+        <Icon Type="setting" />
+    </Template>;
+
+    private RenderFragment actionEdit =@<Template>
+        <Icon Type="edit" />
+    </Template>;
+    
+    private RenderFragment actionEllipsis =@<Template>
+        <Icon Type="ellipsis" />
+    </Template>;
+}
