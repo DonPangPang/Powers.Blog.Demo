@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Powers.Blog.Shared\Powers.Blog.Shared.csproj" />
+    <ProjectReference Include="..\Powers.HttpClient.Extensions\Powers.HttpClient.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

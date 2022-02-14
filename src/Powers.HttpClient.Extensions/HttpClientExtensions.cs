@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Powers.HttpClient.Extensions.Attributes;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -28,9 +30,34 @@ namespace Powers.HttpClient.Extensions
             _httpClientFactory = httpClientFactory;
         }
 
-        public static IApplicationBuilder UseHttpClient(IApplicationBuilder app)
+        /// <summary>
+        /// 使用HttpClient
+        /// </summary>
+        /// <param name="app"> </param>
+        /// <returns> </returns>
+        public static IApplicationBuilder UseHttpClient(this IApplicationBuilder app)
         {
-            _httpClientFactory = app.ServerFeatures.Get<IHttpClientFactory>();
+            using var scoped = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+
+            _httpClientFactory = scoped.ServiceProvider.GetService<IHttpClientFactory>()!;
+
+            Configure(_httpClientFactory!);
+
+            return app;
+        }
+
+        /// <summary>
+        /// 使用HttpClient
+        /// </summary>
+        /// <param name="app"> </param>
+        /// <returns> </returns>
+        public static WebAssemblyHost UseHttpClient(this WebAssemblyHost app)
+        {
+            using var scoped = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
+
+            _httpClientFactory = scoped.ServiceProvider.GetService<IHttpClientFactory>()!;
+
+            Configure(_httpClientFactory!);
 
             return app;
         }
@@ -43,23 +70,18 @@ namespace Powers.HttpClient.Extensions
         /// <param name="parameters"> 请求参数 </param>
         /// <param name="token">      token </param>
         /// <returns> </returns>
-        public static async Task<T?> GetAsync<T>(this string url, Dictionary<string, dynamic> parameters, string token)
+        public static async Task<T?> GetAsync<T>(this string url, Dictionary<string, dynamic>? parameters = null, string token = "")
         {
-            if (!url.IsUrl())
-            {
-                throw new ArgumentException("Url验证失败");
-            }
-
             var client = _httpClientFactory.CreateClient();
-
             if (!string.IsNullOrWhiteSpace(token))
             {
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
+            client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
 
-            if (parameters is not null || parameters.Any())
+            if (parameters is not null && parameters.Any())
             {
                 url = $"{url}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
@@ -79,8 +101,8 @@ namespace Powers.HttpClient.Extensions
         /// <param name="token">      token </param>
         /// <returns> </returns>
         public static async Task<T?> GetAsync<T>(this string clientName, string route,
-            Dictionary<string, dynamic> parameters,
-            string token)
+            Dictionary<string, dynamic>? parameters = null,
+            string token = "")
         {
             var httpClient = _httpClientFactory.CreateClient(clientName);
 
@@ -89,9 +111,9 @@ namespace Powers.HttpClient.Extensions
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
-            if (parameters is not null || parameters.Any())
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
+            if (parameters is not null && parameters.Any())
             {
                 route = $"{route}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
@@ -111,15 +133,10 @@ namespace Powers.HttpClient.Extensions
         /// <returns> </returns>
         [Obsolete("暂时弃用该方法", false)]
         public static async Task<T?> GetAsync<T>(this Uri uri,
-            Dictionary<string, dynamic> parameters,
-            string token)
+            Dictionary<string, dynamic>? parameters = null,
+            string token = "")
         {
             var url = uri.AbsoluteUri;
-
-            if (!url.IsUrl())
-            {
-                throw new ArgumentException("Url验证失败");
-            }
 
             var httpClient = _httpClientFactory.CreateClient();
 
@@ -128,9 +145,9 @@ namespace Powers.HttpClient.Extensions
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
-            if (parameters is not null || parameters.Any())
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
+            if (parameters is not null && parameters.Any())
             {
                 url = $"{url}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
@@ -148,13 +165,8 @@ namespace Powers.HttpClient.Extensions
         /// <param name="body">  请求体 </param>
         /// <param name="token"> token </param>
         /// <returns> </returns>
-        public static async Task<T?> PostAsync<T>(this string url, object body, string token)
+        public static async Task<T?> PostAsync<T>(this string url, object body, string token = "")
         {
-            if (!url.IsUrl())
-            {
-                throw new ArgumentException("Url验证失败");
-            }
-
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -162,8 +174,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var bodyJson = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, Application.Json);
 
             var response = await client.PostAsJsonAsync(url, bodyJson);
@@ -180,7 +192,7 @@ namespace Powers.HttpClient.Extensions
         /// <param name="body">       请求体 </param>
         /// <param name="token">      token </param>
         /// <returns> </returns>
-        public static async Task<T?> PostAsync<T>(this string clientName, string route, object body, string token)
+        public static async Task<T?> PostAsync<T>(this string clientName, string route, object body, string token = "")
         {
             var client = _httpClientFactory.CreateClient(clientName);
 
@@ -189,8 +201,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var bodyJson = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, Application.Json);
 
             var response = await client.PostAsJsonAsync(route, bodyJson);
@@ -206,13 +218,8 @@ namespace Powers.HttpClient.Extensions
         /// <param name="body">  请求体 </param>
         /// <param name="token"> token </param>
         /// <returns> </returns>
-        public static async Task<T?> PutAsync<T>(this string url, object body, string token)
+        public static async Task<T?> PutAsync<T>(this string url, object body, string token = "")
         {
-            if (!url.IsUrl())
-            {
-                throw new ArgumentException("Url验证失败");
-            }
-
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -220,8 +227,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var bodyJson = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, Application.Json);
 
             var response = await client.PutAsJsonAsync(url, bodyJson);
@@ -238,7 +245,7 @@ namespace Powers.HttpClient.Extensions
         /// <param name="body">       请求体 </param>
         /// <param name="token">      token </param>
         /// <returns> </returns>
-        public static async Task<T?> PutAsync<T>(this string clientName, string route, object body, string token)
+        public static async Task<T?> PutAsync<T>(this string clientName, string route, object body, string token = "")
         {
             var client = _httpClientFactory.CreateClient(clientName);
 
@@ -247,8 +254,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var bodyJson = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, Application.Json);
 
             var response = await client.PutAsJsonAsync(route, bodyJson);
@@ -263,13 +270,8 @@ namespace Powers.HttpClient.Extensions
         /// <param name="url">   Url地址 </param>
         /// <param name="token"> token </param>
         /// <returns> </returns>
-        public static async Task<T?> DeleteAsync<T>(this string url, string token)
+        public static async Task<T?> DeleteAsync<T>(this string url, string token = "")
         {
-            if (!url.IsUrl())
-            {
-                throw new ArgumentException("Url验证失败");
-            }
-
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -277,8 +279,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var response = await client.GetFromJsonAsync<T?>(url);
 
             return response!;
@@ -292,7 +294,7 @@ namespace Powers.HttpClient.Extensions
         /// <param name="route">      路由 </param>
         /// <param name="token">      token </param>
         /// <returns> </returns>
-        public static async Task<T?> DeleteAsync<T>(this string clientName, string route, string token)
+        public static async Task<T?> DeleteAsync<T>(this string clientName, string route, string token = "")
         {
             var client = _httpClientFactory.CreateClient(clientName);
 
@@ -301,8 +303,8 @@ namespace Powers.HttpClient.Extensions
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             }
 
-            client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
-
+            client.DefaultRequestHeaders.Accept.Add(
+                                new MediaTypeWithQualityHeaderValue("application/json"));
             var response = await client.GetFromJsonAsync<T?>(route);
 
             return response!;

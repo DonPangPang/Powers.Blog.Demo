@@ -1,4 +1,5 @@
 ﻿@using Powers.Blog.Client
+@using Powers.HttpClient.Extensions
 @inject NavigationManager NavigationManager
 
 <AntDesign.Layout Class="layout">
@@ -25,6 +26,7 @@
                 }
                 </Menu>*@
                 <TagComponent></TagComponent>
+                <Button Type="@ButtonType.Primary" OnClick="() => Btn_Baidu()">Primary</Button>
                 <BackTop Icon="up"></BackTop>
             </AntDesign.Layout>
 
@@ -60,4 +62,6 @@
     public RenderFragment Content{ get; set; }
 
     private void NavigateTo(string path) => NavigationManager.NavigateTo(path);
+
+    private async void Btn_Baidu() => await "https://localhost:7066/WeatherForecast".GetAsync<object>(token:"1111");
 }
