@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Powers.HttpClient.Extensions.Attributes;
+using Powers.HttpClient.Extensions.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,12 +39,17 @@ namespace Powers.HttpClient.Extensions
         /// GET
         /// </summary>
         /// <typeparam name="T"> 返回的类型 </typeparam>
-        /// <param name="url">         Url地址 </param>
-        /// <param name="parameterss"> 请求参数 </param>
-        /// <param name="token">       token </param>
+        /// <param name="url">        Url地址 </param>
+        /// <param name="parameters"> 请求参数 </param>
+        /// <param name="token">      token </param>
         /// <returns> </returns>
-        public static async Task<T?> GetAsync<T>(this string url, Dictionary<string, dynamic> parameterss, string token)
+        public static async Task<T?> GetAsync<T>(this string url, Dictionary<string, dynamic> parameters, string token)
         {
+            if (!url.IsUrl())
+            {
+                throw new ArgumentException("Url验证失败");
+            }
+
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -52,9 +59,9 @@ namespace Powers.HttpClient.Extensions
 
             client.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
 
-            if (parameterss.Any())
+            if (parameters is not null || parameters.Any())
             {
-                url = $"{url}?{string.Join("&", parameterss.Select(x => $"{x.Key}={x.Value}"))}";
+                url = $"{url}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
 
             var response = await client.GetFromJsonAsync<T?>(url);
@@ -66,13 +73,13 @@ namespace Powers.HttpClient.Extensions
         /// GET
         /// </summary>
         /// <typeparam name="T"> 返回类型 </typeparam>
-        /// <param name="clientName">  HttpClient </param>
-        /// <param name="route">       路由 </param>
-        /// <param name="parameterss"> 参数 </param>
-        /// <param name="token">       token </param>
+        /// <param name="clientName"> HttpClient </param>
+        /// <param name="route">      路由 </param>
+        /// <param name="parameters"> 参数 </param>
+        /// <param name="token">      token </param>
         /// <returns> </returns>
         public static async Task<T?> GetAsync<T>(this string clientName, string route,
-            Dictionary<string, dynamic> parameterss,
+            Dictionary<string, dynamic> parameters,
             string token)
         {
             var httpClient = _httpClientFactory.CreateClient(clientName);
@@ -84,9 +91,9 @@ namespace Powers.HttpClient.Extensions
 
             httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
 
-            if (parameterss.Any())
+            if (parameters is not null || parameters.Any())
             {
-                route = $"{route}?{string.Join("&", parameterss.Select(x => $"{x.Key}={x.Value}"))}";
+                route = $"{route}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
 
             var response = await httpClient.GetFromJsonAsync<T?>(route);
@@ -98,16 +105,22 @@ namespace Powers.HttpClient.Extensions
         /// GET
         /// </summary>
         /// <typeparam name="T"> 返回类型 </typeparam>
-        /// <param name="uri">         url </param>
-        /// <param name="parameterss"> 参数 </param>
-        /// <param name="token">       token </param>
+        /// <param name="uri">        url </param>
+        /// <param name="parameters"> 参数 </param>
+        /// <param name="token">      token </param>
         /// <returns> </returns>
         [Obsolete("暂时弃用该方法", false)]
         public static async Task<T?> GetAsync<T>(this Uri uri,
-            Dictionary<string, dynamic> parameterss,
+            Dictionary<string, dynamic> parameters,
             string token)
         {
             var url = uri.AbsoluteUri;
+
+            if (!url.IsUrl())
+            {
+                throw new ArgumentException("Url验证失败");
+            }
+
             var httpClient = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -117,9 +130,9 @@ namespace Powers.HttpClient.Extensions
 
             httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json;charset=utf-8");
 
-            if (parameterss.Any())
+            if (parameters is not null || parameters.Any())
             {
-                url = $"{url}?{string.Join("&", parameterss.Select(x => $"{x.Key}={x.Value}"))}";
+                url = $"{url}?{string.Join("&", parameters.Select(x => $"{x.Key}={x.Value}"))}";
             }
 
             var response = await httpClient.GetFromJsonAsync<T?>(url);
@@ -137,6 +150,11 @@ namespace Powers.HttpClient.Extensions
         /// <returns> </returns>
         public static async Task<T?> PostAsync<T>(this string url, object body, string token)
         {
+            if (!url.IsUrl())
+            {
+                throw new ArgumentException("Url验证失败");
+            }
+
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -190,6 +208,11 @@ namespace Powers.HttpClient.Extensions
         /// <returns> </returns>
         public static async Task<T?> PutAsync<T>(this string url, object body, string token)
         {
+            if (!url.IsUrl())
+            {
+                throw new ArgumentException("Url验证失败");
+            }
+
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
@@ -242,6 +265,11 @@ namespace Powers.HttpClient.Extensions
         /// <returns> </returns>
         public static async Task<T?> DeleteAsync<T>(this string url, string token)
         {
+            if (!url.IsUrl())
+            {
+                throw new ArgumentException("Url验证失败");
+            }
+
             var client = _httpClientFactory.CreateClient();
 
             if (!string.IsNullOrWhiteSpace(token))
