@@ -1,4 +1,6 @@
-﻿<div class="tag-colorful-demo">
+﻿@inject MessageService _message
+
+<div class="tag-colorful-demo">
     <Tag PresetColor="@PresetColor.Magenta">magenta</Tag>
     <Tag PresetColor="@PresetColor.Pink">pink</Tag>
     <Tag PresetColor="@PresetColor.Red">red</Tag>
@@ -12,6 +14,11 @@
     <Tag PresetColor="@PresetColor.Purple">purple</Tag>
     <Tag PresetColor="@PresetColor.Yellow">yellow</Tag>
     <Tag PresetColor="@PresetColor.Gold">gold</Tag>
+
+    @foreach(var item in _tags)
+    {
+        <Tag PresetColor="@(colors[@item.Color])" OnClick="()=>SearchTag(item.Name)">@item.Name</Tag>
+    }
 </div>
 <style>
     .tag-colorful-demo > * {
@@ -24,5 +31,67 @@
     }
 </style>
 @code {
+    static PresetColor[] colors = { 
+        PresetColor.Blue, 
+        PresetColor.Pink,
+        PresetColor.Magenta,
+        PresetColor.Volcano,
+        PresetColor.Orange,
+        PresetColor.Green,
+        PresetColor.Cyan,
+        PresetColor.Lime,
+        PresetColor.GeekBlue,
+        PresetColor.Purple,
+        PresetColor.Yellow,
+        PresetColor.Gold
+    };
 
+    private readonly TagItem[] _tags =
+    {
+        new TagItem
+        {
+            Name = "C语言"
+        },
+        new TagItem
+        {
+            Name = "Java"
+        },
+        new TagItem
+        {
+            Name = "CSharp"
+        },
+        new TagItem
+        {
+            Name = "数据结构"
+        },
+        new TagItem
+        {
+            Name = "Rust"
+        },
+        new TagItem
+        {
+            Name = "Iot Plantform"
+        },
+        new TagItem
+        {
+            Name = "MQTT"
+        },
+        new TagItem
+        {
+            Name = "Kafka"
+        },
+    };
+
+    public class TagItem
+    {
+        public string Name{ get; set; }
+
+        public int Color { get; init; } = new Random().Next(0, colors.Length);
+    }
+
+
+    private void SearchTag(string name)
+    {
+        _message.Success($"您选取的标签: {name}");
+    }
 }
