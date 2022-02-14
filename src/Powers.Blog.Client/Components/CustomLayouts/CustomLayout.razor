@@ -26,7 +26,7 @@
                 }
                 </Menu>*@
                 <TagComponent></TagComponent>
-                <Button Type="@ButtonType.Primary" OnClick="() => Btn_Baidu()">Primary</Button>
+                <Button Type="@ButtonType.Primary" OnClick="() => Btn_Test()">Primary</Button>
                 <BackTop Icon="up"></BackTop>
             </AntDesign.Layout>
 
@@ -63,5 +63,17 @@
 
     private void NavigateTo(string path) => NavigationManager.NavigateTo(path);
 
-    private async void Btn_Baidu() => await "https://localhost:7066/WeatherForecast".GetAsync<object>(token:"1111");
+    private async void Btn_Test()
+    {
+        var result = await "https://localhost:7066/WeatherForecast"
+                            .GetAsync<object>
+                            (
+                                parameters: new
+                                {
+                                    id = 1,
+                                    count = 2
+                                },
+                                token: "1111"
+                            );
+    }
 }
